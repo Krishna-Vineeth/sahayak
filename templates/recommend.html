@@ -1,12 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <h1>hello world </h1>
-</body>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .symptoms {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-gap: 20px;
+            margin-top: 20px;
+        }
+
+        .box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .get-recommendations {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .get-recommendations:hover {
+            background-color: #0056b3;
+        }
+    </style>
+
+    <body>
+
+        <div class="symptoms">
+
+        </div>
+
+        <div class="grid-container">
+            <div class="box disease">
+                <h2>Predicted disease from symptoms</h2>
+            </div>
+            <button class="get-recommendations">Get more recommendations</button>
+            <div class="box medications hidden">
+                <h2>Medications</h2>
+            </div>
+            <div class="box articles hidden">
+                <h2>articles</h2>
+            </div>
+            <div class="box additional hidden">
+                <h2>additional info</h2>
+            </div>
+            <div class="box doctor hidden">
+                <h2>Doctor</h2>
+            </div>
+        </div>
+    </body>
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+
+        const symptoms = urlParams.get('symptoms');
+        const diseaseDiv = document.querySelector('.box.disease');
+        const medicationsDiv = document.querySelector('.box.medications');
+        const additionalDiv = document.querySelector('.box.additional');
+        const doctorDiv = document.querySelector('.box.doctor');
+        const articlesDiv = document.querySelector('.box.articles');
+
+        const symptomsDiv = document.querySelector('.symptoms');
+        symptomsDiv.innerHTML = `${symptoms}`;
+
+        axios.post("https://niyabackend.pythonanywhere.com/predict", JSON.stringify( symptoms.split("&") ), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then((res) => {
+            // const { disease, medications, additional, doctor, articles } = res.data;
+
+            // diseaseDiv.innerHTML = `<h2>Predicted disease from symptoms</h2>${disease}`;
+            // medicationsDiv.innerHTML = `<h2>Medications</h2>${medications}`;
+            // additionalDiv.innerHTML = `<h2>Additional Info</h2>${additional}`;
+            // doctorDiv.innerHTML = `<h2>Doctor</h2>${doctor}`;
+            // articlesDiv.innerHTML = `<h2>Articles</h2>${articles}`;
+            console.log(res.data);
+            if (res.data[0] == res.data[1]) {
+                diseaseDiv.innerHTML = `<h2>Predicted disease from symptoms</h2>${res.data[0]}`;
+            }
+            else {
+                diseaseDiv.innerHTML = `<h2>Predicted disease from symptoms</h2>${res.data[0]} or ${res.data[1]}`;
+            }
+
+
+
+        })
+        .catch((err) => {
+            console.log(err);
+        })
+
+        let predictedDisease = 'Malaria';
+        let medications = ['Medication 1', 'Medication 2', 'Medication 3'];
+        let additionalMeasures = ['Measure 1', 'Measure 2', 'Measure 3'];
+        let advice = ['Advice 1', 'Advice 2', 'Advice 3'];
+
+        const getRecommendationsBtn = document.querySelector('.get-recommendations');
+        getRecommendationsBtn.addEventListener('click', function() {
+            medicationsDiv.classList.remove('hidden');
+            additionalDiv.classList.remove('hidden');
+            doctorDiv.classList.remove('hidden');
+            articlesDiv.classList.remove('hidden');
+            getRecommendationsBtn.remove()
+        });
+
+</script>
 </html>

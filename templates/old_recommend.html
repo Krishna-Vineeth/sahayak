@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            min-height: 100vh;
+            padding: 3rem 0;
+        }
+
+        .grid-container {
+            max-width: 70%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-gap: 2rem;
+        }
+
+        .get-recommendations {
+            max-width: 150px;
+            max-height: 50px;
+            padding: 2rem 2.5rem;
+            border-radius: 8px;
+            margin: auto;
+            border-style: none;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all .5s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .get-recommendations:hover {
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .box {
+            width: 400px;
+            max-width: 400px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            visibility: none;
+            opacity: 0;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
+
+    <body>
+
+        <div class="symptoms">
+
+        </div>
+
+        <div class="grid-container">
+            <div class="box disease">
+                <h2>Predicted disease from symptoms</h2>
+            </div>
+            <button class="get-recommendations">Get more recommendations</button>
+            <div class="box medications hidden">
+                <h2>Medications</h2>
+            </div>
+            <div class="box articles hidden">
+                <h2>articles</h2>
+            </div>
+            <div class="box additional hidden">
+                <h2>additional info</h2>
+            </div>
+            <div class="box doctor hidden">
+                <h2>Doctor</h2>
+            </div>
+        </div>
+    </body>
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+
+        const symptoms = urlParams.get('symptoms');
+        const diseaseDiv = document.querySelector('.box.disease');
+        const medicationsDiv = document.querySelector('.box.medications');
+        const additionalDiv = document.querySelector('.box.additional');
+        const doctorDiv = document.querySelector('.box.doctor');
+        const articlesDiv = document.querySelector('.box.articles');
+
+        const symptomsDiv = document.querySelector('.symptoms');
+        symptomsDiv.innerHTML = `${symptoms}`;
+
+        axios.post("https://niyabackend.pythonanywhere.com/predict", JSON.stringify( symptoms.split("&") ), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then((res) => {
+            // const { disease, medications, additional, doctor, articles } = res.data;
+
+            // diseaseDiv.innerHTML = `<h2>Predicted disease from symptoms</h2>${disease}`;
+            // medicationsDiv.innerHTML = `<h2>Medications</h2>${medications}`;
+            // additionalDiv.innerHTML = `<h2>Additional Info</h2>${additional}`;
+            // doctorDiv.innerHTML = `<h2>Doctor</h2>${doctor}`;
+            // articlesDiv.innerHTML = `<h2>Articles</h2>${articles}`;
+            console.log(res.data);
+            if (res.data[0] == res.data[1]) {
+                diseaseDiv.innerHTML = `<h2>Predicted disease from symptoms</h2>${res.data[0]}`;
+            }
+            else {
+                diseaseDiv.innerHTML = `<h2>Predicted disease from symptoms</h2>${res.data[0]} or ${res.data[1]}`;
+            }
+
+
+
+        })
+        .catch((err) => {
+            console.log(err);
+        })
+
+        let predictedDisease = 'Malaria';
+        let medications = ['Medication 1', 'Medication 2', 'Medication 3'];
+        let additionalMeasures = ['Measure 1', 'Measure 2', 'Measure 3'];
+        let advice = ['Advice 1', 'Advice 2', 'Advice 3'];
+
+        const getRecommendationsBtn = document.querySelector('.get-recommendations');
+        getRecommendationsBtn.addEventListener('click', function() {
+            medicationsDiv.classList.remove('hidden');
+            additionalDiv.classList.remove('hidden');
+            doctorDiv.classList.remove('hidden');
+            articlesDiv.classList.remove('hidden');
+            getRecommendationsBtn.remove()
+        });
+
+</script>
+</html>

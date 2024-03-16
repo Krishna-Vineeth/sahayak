@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Related Symptoms</title>
+</head>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<style>
+    .box {
+      background-color: #f5f5f5; /* Light gray background */
+      border-radius: 10px; /* Rounded corners */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      padding: 30px; /* Increase padding for better spacing */
+      margin: 20px auto; /* Center the box horizontally */
+      max-width: 600px; /* Set a maximum width for responsiveness */
+    }
+    
+    .title {
+      font-size: 20px; /* Slightly smaller heading size */
+      font-weight: bold;
+      margin-bottom: 15px; /* Consistent margin for elements */
+      color: #333; /* Darker text color for better contrast */
+    }
+    
+    .info {
+      font-size: 16px;
+      color: #666; /* Lighter text color for less emphasis */
+      margin-bottom: 20px;
+    }
+    
+    .related-symptoms {
+      margin-top: 20px;
+    }
+    
+    .symptoms-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0; /* Remove default margin for better spacing */
+    }
+    
+    .symptoms-list li {
+      margin-bottom: 10px;
+    }
+    
+    .symptom-tag {
+      display: inline-block;
+      padding: 8px 15px; /* Adjust padding for better button size */
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out; /* Add smooth transition */
+    }
+    
+    .symptom-tag.selected {
+      background-color: #ff4040; /* Red for selected symptoms */
+      color: #fff; /* White text for better contrast */
+    }
+    
+    /* Optional: Add hover effect for unselected tags */
+    .symptom-tag:hover:not(.selected) {
+      background-color: #eee;
+    }
+    
+    .primary {
+      margin-bottom: 20px;
+    }
+    
+    .primary-symptom {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .submit {
+      background-color: #4CAF50; /* Green button color */
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+    
+    .submit:hover {
+      background-color: #3e8e41; /* Darker green on hover */
+    }
+    </style>
+<body>
+
+    <div class="box">
+        <div class="title">Related Symptoms</div>
+        <div class="info">Choose if you are also feeling any of the related symptoms given below</div>
+        <div class="primary">
+            Primary Symptom: <span class="primary-symptom"></span>
+        </div>
+        <div class="related-symptoms">
+            <ul class="symptoms-list">
+                
+            </ul>
+        </div>
+
+        <button class="submit" onclick="submitForm()">
+            Go
+        </button>
+    </div>
+    
+</body>
+<script type="module">
+    import { db, dbRef, dbPush, onValue } from "./static/js/fire.js";
+    const primarySymptom = document.querySelector('.primary-symptom');
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const symptom = urlParams.get('symptom');
+        primarySymptom.textContent = symptom;
+
+        axios.get('https://niyabackend.pythonanywhere.com/get_related_syms?s=' + symptom)
+            .then(response => {
+                console.log(response.data);
+                const symptomsList = document.querySelector('.symptoms-list');
+                
+                response.data.forEach(symptom => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = symptom.replace(/_/g, ' ').replace(/\b\w/g, function(c) {
+                        return c.toUpperCase();
+                    });
+                    listItem.setAttribute("raw_symptom", symptom);
+                    listItem.classList.add('symptom-tag');
+                    listItem.addEventListener('click', () => {
+                        listItem.classList.toggle('selected');
+                    });
+                    symptomsList.appendChild(listItem);
+                });
+
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    });
+
+    
+
+    window.submitForm = () => {
+            var selectedSymptoms = document.querySelectorAll('.symptom-tag.selected');
+            var selectedSymptomNames = [];
+            selectedSymptoms.forEach(function(symptom) {
+                selectedSymptomNames.push(symptom.getAttribute("raw_symptom"));
+            });
+            console.log(selectedSymptomNames)
+            
+            var user = JSON.parse(localStorage.getItem("user"));
+            console.log(`${primarySymptom.textContent},${selectedSymptomNames.join(",")}`)
+
+            const usersActivityRef = dbRef(db, `users/${user.email.split("@")[0]}/activity`);
+            dbPush(usersActivityRef, { "symptom": `${primarySymptom.textContent},${selectedSymptomNames.join(",")}`, "time": Date.now() } )
+            .then(() => {
+                console.log("Data pushed successfully!");
+                window.location.href = '/recommend.html?symptoms=' + encodeURIComponent(selectedSymptomNames.join(','));
+            })
+            .catch((error) => {
+                console.error("Error pushing data:", error);
+            });
+        }
+        
+        // Add click event listener to each symptom tag
+        var symptomTags = document.querySelectorAll('.symptom-tag');
+        symptomTags.forEach(function(symptomTag) {
+            symptomTag.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+</script>
+</html>

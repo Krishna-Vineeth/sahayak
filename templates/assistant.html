@@ -4,6 +4,7 @@
   <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
   <title>Voice Chat App</title>
   <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   
   <style>
@@ -27,7 +28,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      max-width: 800px;
+      width: 80%;
       margin: 0 auto;
       padding: 20px;
       background-color: #fff;
@@ -60,6 +61,26 @@
       margin-top: 20px;
       font-size: 18px;
       font-weight: bold;
+    }
+
+
+    .chatBox ul {
+      padding: 0;
+      overflow: scroll;
+    }
+
+    .chatBox li {
+      margin-bottom: 10px;
+      padding: .75rem;
+      border-radius: 14px;
+      max-width: max-content;
+      background-color: #d06631;
+      color: white;
+    }
+
+    .chatBox li.user {
+      background-color: rgb(229, 89, 3);
+      margin-left: auto;
     }
 
     #video-container {
@@ -109,7 +130,12 @@
       <button id="startButton">Start</button>
       <button id="stopButton">Stop</button>
     </div>
-    <p id="result"></p>
+    <p id="result">
+      <ul class="chatBox">
+        <li class="user">Hello</li>
+        <li class="ai">Hello there! How can you hep me</li>
+      </ul>
+    </p>
     <div id="video-container"></div>
   </div>
 
@@ -146,7 +172,11 @@
 
     var recognizer;
 
+    let selected_symptoms = []
+
     function startRecognition() {
+      const ul = document.querySelector('.chatBox');
+
       var headers = {
         'Authorization': 'Bearer ' + authorizationToken,
         'Content-Type': 'audio/wav; codec=audio/pcm; samplerate=16000'
@@ -155,17 +185,123 @@
       recognizer = new webkitSpeechRecognition();
       recognizer.continuous = true;
       recognizer.interimResults = true;
-      recognizer.lang = 'hi-IN';
+      recognizer.lang = 'en-IN';
       recognizer.start();
 
       recognizer.onresult = function (event) {
+        selected_symptoms = [];
         var result = event.results[event.resultIndex];
         if (result.isFinal) {
           var transcribedText = result[0].transcript;
-          $('#result').text(transcribedText);
-          setTimeout(function() {
-            generateVideo(transcribedText);
-          }, 1000); // Delay of 1 second (1000 milliseconds)
+
+          // $('#result').text(transcribedText);
+          var li = document.createElement('li');
+          li.appendChild(document.createTextNode(transcribedText));
+          li.classList.add('user');
+          ul.appendChild(li);
+
+
+      // Call Google Gemini API
+      var geminiPrompt = `
+        extract disease symptoms from this text: ${transcribedText}
+        change it to any one of the following:
+        ["skin_rash","nodal_skin_eruptions","continuous_sneezing","shivering","chills","joint_pain","stomach_pain","acidity","ulcers_on_tongue","muscle_wasting","vomiting","burning_micturition","spotting_urination","fatigue","weight_gain","anxiety","cold_hands_and_feets","mood_swings","weight_loss","restlessness","lethargy","patches_in_throat","irregular_sugar_level","cough","high_fever","sunken_eyes","breathlessness","sweating","dehydration","indigestion","headache","yellowish_skin","dark_urine","nausea","loss_of_appetite","pain_behind_the_eyes","back_pain","constipation","abdominal_pain","diarrhoea","mild_fever","yellow_urine","yellowing_of_eyes","acute_liver_failure","fluid_overload","swelling_of_stomach","swelled_lymph_nodes","malaise","blurred_and_distorted_vision","phlegm","throat_irritation","redness_of_eyes","sinus_pressure","runny_nose","congestion","chest_pain","weakness_in_limbs","fast_heart_rate","pain_during_bowel_movements","pain_in_anal_region","bloody_stool","irritation_in_anus","neck_pain","dizziness","cramps","tiredness","bruising","obesity","swollen_legs","swollen_blood_vessels","puffy_face_and_eyes","enlarged_thyroid","brittle_nails","swollen_extremeties","excessive_hunger","extra_marital_contacts","drying_and_tingling_lips","slurred_speech","knee_pain","hip_joint_pain","muscle_weakness","stiff_neck","swelling_joints","movement_stiffness","spinning_movements","loss_of_taste","loss_of_balance","unsteadiness","weakness_of_one_body_side","loss_of_smell","bladder_discomfort","foul_smell_of urine","continuous_feel_of_urine","passage_of_gases","internal_itching","toxic_look_(typhos)","depression","irritability","muscle_pain","altered_sensorium","red_spots_over_body","belly_pain","abnormal_menstruation","dischromic_patches","watering_from_eyes","increased_appetite","polyuria","family_history","mucoid_sputum","rusty_sputum","lack_of_concentration","visual_disturbances","receiving_blood_transfusion","receiving_unsterile_injections","coma","stomach_bleeding","distention_of_abdomen","history_of_alcohol_consumption","fluid_overload","blood_in_sputum","prominent_veins_on_calf","palpitations","painful_walking","pus_filled_pimples","blackheads","scurring","skin_peeling","silver_like_dusting","small_dents_in_nails","inflammatory_nails","blister","red_sore_around_nose","yellow_crust_ooze","itching"]
+        only respond with the symptom, no other text should be in the response
+      `;
+      let geminiKey = 'AIzaSyBYTU4xUx5hwtcTPMqnpvQmv7INQYEuKcY'
+      
+      
+      axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`, 
+      {
+        contents: [
+          {
+            parts: [
+              {
+                text: geminiPrompt
+              }
+            ]
+          }
+        ]
+      }
+      , {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        console.log(response)
+        var responseText = response.data.candidates[0].content.parts[0].text;
+        console.log(responseText);
+        var li = document.createElement('li');
+        li.appendChild(document.createTextNode(`It seems like you are feeling ${responseText}`));
+        li.classList.add('ai');
+        ul.appendChild(li);        
+        
+        if (["skin_rash","nodal_skin_eruptions","continuous_sneezing","shivering","chills","joint_pain","stomach_pain","acidity","ulcers_on_tongue","muscle_wasting","vomiting","burning_micturition","spotting_urination","fatigue","weight_gain","anxiety","cold_hands_and_feets","mood_swings","weight_loss","restlessness","lethargy","patches_in_throat","irregular_sugar_level","cough","high_fever","sunken_eyes","breathlessness","sweating","dehydration","indigestion","headache","yellowish_skin","dark_urine","nausea","loss_of_appetite","pain_behind_the_eyes","back_pain","constipation","abdominal_pain","diarrhoea","mild_fever","yellow_urine","yellowing_of_eyes","acute_liver_failure","fluid_overload","swelling_of_stomach","swelled_lymph_nodes","malaise","blurred_and_distorted_vision","phlegm","throat_irritation","redness_of_eyes","sinus_pressure","runny_nose","congestion","chest_pain","weakness_in_limbs","fast_heart_rate","pain_during_bowel_movements","pain_in_anal_region","bloody_stool","irritation_in_anus","neck_pain","dizziness","cramps","tiredness","bruising","obesity","swollen_legs","swollen_blood_vessels","puffy_face_and_eyes","enlarged_thyroid","brittle_nails","swollen_extremeties","excessive_hunger","extra_marital_contacts","drying_and_tingling_lips","slurred_speech","knee_pain","hip_joint_pain","muscle_weakness","stiff_neck","swelling_joints","movement_stiffness","spinning_movements","loss_of_taste","loss_of_balance","unsteadiness","weakness_of_one_body_side","loss_of_smell","bladder_discomfort","foul_smell_of urine","continuous_feel_of_urine","passage_of_gases","internal_itching","toxic_look_(typhos)","depression","irritability","muscle_pain","altered_sensorium","red_spots_over_body","belly_pain","abnormal_menstruation","dischromic_patches","watering_from_eyes","increased_appetite","polyuria","family_history","mucoid_sputum","rusty_sputum","lack_of_concentration","visual_disturbances","receiving_blood_transfusion","receiving_unsterile_injections","coma","stomach_bleeding","distention_of_abdomen","history_of_alcohol_consumption","fluid_overload","blood_in_sputum","prominent_veins_on_calf","palpitations","painful_walking","pus_filled_pimples","blackheads","scurring","skin_peeling","silver_like_dusting","small_dents_in_nails","inflammatory_nails","blister","red_sore_around_nose","yellow_crust_ooze","itching"].includes(responseText)) {
+          axios.get(`https://niyabackend.pythonanywhere.com/get_related_syms?s=${responseText}`)
+          .then((res) => {
+            
+          var li = document.createElement('li');
+          li.appendChild(document.createTextNode("Are you feeling any of the following symptoms?"));
+          li.classList.add('ai');
+          ul.appendChild(li);
+
+            console.log(res);
+            
+            var symptoms = res.data;
+            for (var i = 0; i < symptoms.length; i++) {
+              var button = document.createElement('button');
+              button.appendChild(document.createTextNode(symptoms[i]));
+              button.classList.add('symptom');
+              ul.appendChild(button);
+              button.addEventListener('click', function() {
+                var selectedSymptom = this.textContent;
+                alert(`Selected ${selectedSymptom}`);
+                selected_symptoms.push(selectedSymptom);
+              });
+            }
+            var button = document.createElement('button');
+            button.appendChild(document.createTextNode("Submit"));
+              button.classList.add('symptom');
+              ul.appendChild(button);
+              button.addEventListener('click', function() {
+                window.location.href=`/recommend?symptoms=${selected_symptoms.join(',')}`
+              });
+            
+          })
+          .catch((err) => {
+            console.log(err)
+          })
+        }
+        
+      })
+      .catch(error => {
+        console.error('Error calling Gemini API:', error);
+      });
+      
+      // fetch('https://api.example.com/gemini', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify({ prompt: geminiPrompt })
+      // })
+      // .then(response => response.json())
+      // .then(data => {
+      //   var responseText = data.response;
+
+      //   var li = document.createElement('li');
+      //   li.appendChild(document.createTextNode(responseText));
+      //   li.classList.add('ai');
+      //   ul.appendChild(li);
+      // })
+      // .catch(error => {
+      //   console.error('Error calling Gemini API:', error);
+      // });
+
+          // setTimeout(function() {
+          //   generateVideo(transcribedText);
+          // }, 1000); // Delay of 1 second (1000 milliseconds)
         }
       };
 
@@ -218,8 +354,8 @@
         }
       };
 
-      var body = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="hi-IN">' +
-        '<voice name="hi-IN-SwaraNeural">' + text + '</voice></speak>';
+      var body = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">' +
+        '<voice name="en-US-AriaNeural">' + text + '</voice></speak>';
 
       request.send(body);
     }
