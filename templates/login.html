@@ -1,0 +1,210 @@
+<!-- login and signup sections -->
+
+<html>
+    <head>
+        <title>login</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <style>
+        .section {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 400px;
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .form-group input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .form-group input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        
+        .form-group .error-message {
+            color: red;
+            font-size: 14px;
+        }
+        </style>
+
+    </head>
+
+    <body>
+        <!-- login section -->
+        <body>
+            <!-- login section -->
+            <section id="login" class="login section">
+                <div class="login__container container grid">
+                    <div>
+                        <div class="login__content">
+                            <div class="login__img">
+                                <img src="assets/img/img-login.svg" alt="" />
+                            </div>
+    
+                            <div class="login__content">
+                                <form
+                                    action="#"
+                                    class="login__form"
+                                    id="login-form"
+                                >
+                                    <h1 class="login__title">Login</h1>
+                                    <div class="login__box">
+                                        <i class="bx bx-user login__icon"></i>
+                                        <input
+                                            type="text"
+                                            placeholder="Email address"
+                                            class="login__input"
+                                        />
+                                        <input type="password" placeholder="Password" >
+                                    </div>
+                                    <input type="submit" value="Log In">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+    
+            <!-- signup section -->
+            <section id="signup" class="signup section">
+                <div class="signup__container container grid">
+                    <div>
+                        <div class="signup__content">
+                            <div class="signup__img">
+                                <img src="assets/img/img-signup.svg" alt="" />
+                            </div>
+    
+                            <div class="signup__content">
+                                <form
+                                    action="#"
+                                    class="signup__form"
+                                    id="signup-form"
+                                >
+                                    <h1 class="signup__title">Signup</h1>
+    
+                                    <div class="signup__box">
+                                        <i class="bx bx-user signup__icon"></i>
+                                        <input
+                                            type="text"
+                                            placeholder="Email address"
+                                            class="signup__input"
+                                        />
+                                        <input type="password" placeholder="Enter a strong password">
+                                    </div>
+                                    <input type="submit" value="Sign Up">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </body>
+    </body>
+
+    <script defer type="module">
+
+        import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { auth } from "./static/js/fire.js";
+
+        const loginForm = document.getElementById("login-form");
+        const signupForm = document.getElementById("signup-form");
+        const logoutBtn = document.getElementById("logoutBtn");
+
+        const user = auth.currentUser;
+        if (user) {
+          // User is logged in
+          window.location.href = "{{ url_for('index') }}";
+        }
+
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            if (loginForm[0].value === "" || loginForm[1].value === "") {
+                alert("Please fill in all fields");
+                return;
+            }
+            else {
+                console.log("login form submitted");
+                signInWithEmailAndPassword(auth, loginForm[0].value, loginForm[1].value)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        localStorage.setItem("user", JSON.stringify(user));
+                        window.location.href = "{{ url_for('index') }}";
+                    })
+                    .catch((error) => {
+                        const errorCode = error.code;
+                        const errorMessage = error.message;
+                        alert(errorMessage);
+                    });
+            }
+        });
+
+        signupForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            if (signupForm[0].value === "" || signupForm[1].value === "") {
+                alert("Please fill in all fields");
+                return;
+            }
+            else {
+                console.log("signup form submitted");
+                createUserWithEmailAndPassword(auth, signupForm[0].value, signupForm[1].value)
+                    .then((userCredential) => {
+                        // Signed in
+                        const user = userCredential.user;
+                        alert("User created successfully");
+                        localStorage.setItem("user", JSON.stringify(user));
+                        window.location.href = "{{ url_for('index') }}";
+                        // ...
+                    })
+                    .catch((error) => {
+                        const errorCode = error.code;
+                        const errorMessage = error.message;
+                        alert(errorMessage);
+                    });
+            }
+        });
+
+        // Logout functionality
+    logoutBtn.addEventListener("click", () => {
+        signOut(auth)
+          .then(() => {
+            // Sign-out successful
+            console.log("User signed out");
+            localStorage.removeItem("user");
+            window.location.href = "{{ url_for('index') }}";
+          })
+          .catch((error) => {
+            // An error occurred
+            console.error("Error signing out:", error);
+          });
+      });
+    </script>
+</html>

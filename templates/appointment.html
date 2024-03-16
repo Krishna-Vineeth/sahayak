@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthCare Appointment Booking</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #1abc9c;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        section {
+            border-radius: 10px;
+            padding: 20px;
+            width: 45%;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        /* Neumorphism Effects */
+        #doctors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .doctor {
+            background-color: #e0e5ec;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 20px;
+            text-align: center;
+            transition: box-shadow 0.3s;
+            box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.5), 5px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        .doctor:hover {
+            box-shadow: -5px -5px 10px rgba(255, 255, 255, 0.5), 5px 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        .doctor.selected {
+            background-color: #1abc9c;
+            color: #fff;
+            box-shadow: inset -5px -5px 10px rgba(255, 255, 255, 0.2), inset 5px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+        }
+        select,
+        input[type="date"],
+        input[type="email"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #e0e5ec;
+            box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.5), inset 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* Hover Effects */
+        button[type="submit"] {
+            background-color: #1abc9c;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button[type="submit"]:hover {
+            background-color: #16a085;
+        }
+        /* Footer */
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .footer-links a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>HealthCare Appointment Booking</h1>
+    </header>
+    <main>
+        <section id="doctor-list">
+            <h2>Available Doctors</h2>
+            <div id="doctors"></div>
+        </section>
+        <section id="appointment-form">
+            <h2>Book an Appointment</h2>
+            <form id="appointmentForm">
+                <label for="doctor-select">Select a Doctor:</label>
+                <select id="doctor-select" required></select>
+                <label for="date">Select a Date:</label>
+                <input type="date" id="date" required>
+                <label for="time">Select a Time:</label>
+                <select id="time" required></select>
+                <label for="email">Your Email:</label>
+                <input type="email" id="email" required>
+                <button type="submit">Book Appointment</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <div class="footer-links">
+            <a href="#">About Us</a>
+            <a href="#">Services</a>
+            <a href="#">Contact</a>
+            <a href="#">Privacy Policy</a>
+        </div>
+        <p>&copy; 2023 HealthCare Appointment Booking</p>
+    </footer>
+    <script>
+        // Sample data for doctors and their availability
+        const doctors = [
+            {
+                name: "Dr. John Doe",
+                specialty: "Cardiology",
+                availability: [
+                    { date: "2023-05-01", times: ["09:00", "10:00", "11:00"] },
+                    { date: "2023-05-02", times: ["14:00", "15:00"] },
+                    { date: "2023-05-03", times: ["10:00", "11:00", "16:00"] }
+                ]
+            },
+            {
+                name: "Dr. Jane Smith",
+                specialty: "Dermatology",
+                availability: [
+                    { date: "2023-05-01", times: ["10:00", "11:00", "16:00"] },
+                    { date: "2023-05-02", times: ["09:00", "14:00"] },
+                    { date: "2023-05-03", times: ["11:00", "15:00"] }
+                ]
+            },
+            {
+                name: "Dr. Michael Johnson",
+                specialty: "Orthopedics",
+                availability: [
+                    { date: "2023-05-01", times: ["11:00", "14:00", "16:00"] },
+                    { date: "2023-05-02", times: ["10:00", "15:00"] },
+                    { date: "2023-05-03", times: ["09:00", "13:00", "16:00"] }
+                ]
+            }
+        ];
+
+        // Function to render doctors
+        function renderDoctors() {
+            const doctorsContainer = document.getElementById("doctors");
+            doctorsContainer.innerHTML = "";
+            doctors.forEach((doctor, index) => {
+                const doctorElement = document.createElement("div");
+                doctorElement.classList.add("doctor");
+                doctorElement.textContent = ${doctor.name} - ${doctor.specialty};
+                doctorElement.addEventListener("click", () => selectDoctor(index));
+                doctorsContainer.appendChild(doctorElement);
+            });
+        }
+
+        // Function to select a doctor
+        let selectedDoctorIndex = null;
+        function selectDoctor(index) {
+            const doctorElements = document.querySelectorAll(".doctor");
+            doctorElements.forEach((element, i) => {
+                element.classList.remove("selected");
+                if (i === index) {
+                    element.classList.add("selected");
+                    selectedDoctorIndex = index;
+                    updateDateAndTime();
+                }
+            });
+        }
+
+        // Function to update date and time options based on selected doctor
+        function updateDateAndTime() {
+            const dateInput = document.getElementById("date");
+            const timeSelect = document.getElementById("time");
+            const doctorSelect = document.getElementById("doctor-select");
+            // Clear existing options
+            dateInput.innerHTML = "";
+            timeSelect.innerHTML = "";
+            doctorSelect.innerHTML = "";
+            // Add doctor options
+            const doctorOption = document.createElement("option");
+            doctorOption.value = "";
+            doctorOption.textContent = "Select a Doctor";
+            doctorOption.disabled = true;
+            doctorOption.selected = true;
+            doctorSelect.appendChild(doctorOption);
+            doctors.forEach((doctor, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = ${doctor.name} - ${doctor.specialty};
+                doctorSelect.appendChild(option);
+            });
+            if (selectedDoctorIndex !== null) {
+                doctorSelect.value = selectedDoctorIndex;
+                // Add available dates
+                const availableDates = new Set(doctors[selectedDoctorIndex].availability.map(item => item.date));
+                availableDates.forEach(date => {
+                    const option = document.createElement("option");
+                    option.value = date;
+                    option.textContent = date;
+                    dateInput.appendChild(option);
+                });
+                // Add available times
+                const selectedDate = dateInput.value;
+                const availableTimes = doctors[selectedDoctorIndex].availability.find(item => item.date === selectedDate)?.times || [];
+                availableTimes.forEach(time => {
+                    const option = document.createElement("option");
+                    option.value = time;
+                    option.textContent = time;
+                    timeSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Event listener for date change
+        document.getElementById("date").addEventListener("change", updateDateAndTime);
+
+        // Event listener for form submission
+        document.getElementById("appointmentForm").addEventListener("submit", handleAppointmentSubmit);
+
+        // Initial render
+        renderDoctors();
+
+        // Function to handle appointment submission
+        function handleAppointmentSubmit(event) {
+            event.preventDefault();
+            const doctorSelect = document.getElementById("doctor-select");
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+            const email = document.getElementById("email").value;
+            if (doctorSelect.value && date && time && email) {
+                const selectedDoctor = doctors[doctorSelect.value];
+                const doctorName = selectedDoctor.name;
+                const appointmentDate = ${date} ${time};
+                // Send appointment confirmation email
+                sendEmail(email, doctorName, appointmentDate);
+                // Display confirmation message or perform any other desired actions
+                alert(Appointment booked with ${doctorName} on ${appointmentDate}. Confirmation email has been sent to ${email});
+            } else {
+                alert("Please select a doctor, date, time, and enter your email.");
+            }
+        }
+
+        // Function to simulate sending an email
+        function sendEmail(email, doctorName, appointmentDate) {
+            // Here you would integrate with an email service to send an actual email, but for demonstration purposes, we'll just log the email content
+            console.log(Email sent to ${email}: Appointment booked with ${doctorName} on ${appointmentDate});
+        }
+    </script>
+</body>
+</html>

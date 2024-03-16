@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Assistant Reminder</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #reminderList {
+            list-style: none;
+            padding: 0;
+        }
+
+        .reminder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        #customReminderForm {
+            margin-top: 20px;
+        }
+
+        #customReminderForm label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        #customReminderForm input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+
+        #customReminderForm input[type="submit"] {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #customReminderForm input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Health Assistant Reminder</h1>
+
+    <ul id="reminderList">
+        <!-- Predefined reminders will be added dynamically using JavaScript -->
+    </ul>
+
+    <form id="customReminderForm">
+        <label for="customReminder">Custom Reminder:</label>
+        <input type="text" id="customReminder" placeholder="Enter your reminder">
+        <input type="submit" value="Set Reminder">
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Predefined reminders
+        const predefinedReminders = ['Drink water', 'Take medicine', 'Consult a doctor'];
+
+        // Function to create a reminder item
+        function createReminderItem(text) {
+            const listItem = document.createElement('li');
+            listItem.className = 'reminder-item';
+            listItem.innerHTML = `
+                <span>${text}</span>
+                <button onclick="removeReminder(this)">Remove</button>
+            `;
+            return listItem;
+        }
+
+        // Display predefined reminders
+        const reminderList = document.getElementById('reminderList');
+        predefinedReminders.forEach(function (reminder) {
+            reminderList.appendChild(createReminderItem(reminder));
+        });
+
+        // Event listener for custom reminder form
+        const customReminderForm = document.getElementById('customReminderForm');
+        customReminderForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const customReminderInput = document.getElementById('customReminder');
+            const customReminderText = customReminderInput.value.trim();
+
+            if (customReminderText !== '') {
+                reminderList.appendChild(createReminderItem(customReminderText));
+                customReminderInput.value = '';
+            }
+        });
+    });
+
+    // Function to remove a reminder item
+    function removeReminder(button) {
+        const listItem = button.parentElement;
+        listItem.remove();
+    }
+</script>
+
+</body>
+</html>

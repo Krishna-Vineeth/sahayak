@@ -1,0 +1,370 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
+  <title>Speech to Text</title>
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
+  
+  <style>
+    body {
+            font-family: "Open Sans", sans-serif;
+      background-color:#FEF8F5; 
+        
+        }
+
+        h1 {
+            color: #4E4039;
+            text-align: center;
+        }
+
+        #container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #eb5d1e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #f77e4a;
+    }
+
+   
+
+    .pulse-animation {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    
+        @keyframes floatAnimation {
+            0% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+            100% { transform: translateX(-50%) translateY(0); }
+        }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1></h1>
+<style>
+  #container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative; /* Added */
+  }
+
+  .button-container {
+    text-align: right; /* Changed to right */
+    position: absolute; /* Added */
+    bottom: 20px; /* Added */
+    right: 20px; /* Added */
+  }
+
+  /* Rest of the CSS code... */
+
+</style>
+
+    <div class="button-container">
+      <button id="startButton">Start</button>
+      <button id="stopButton">Stop</button>
+    </div>
+    
+    <p id="result"></p>
+   
+  </div>
+
+  <script>
+    var subscriptionKey = '53a3231e62ad4d8388135e3308e4b632';
+    var tokenEndpoint = 'https://eastus.api.cognitive.microsoft.com/sts/v1.0/issuetoken';
+    var speechRecognitionEndpoint = 'https://eastus.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1';
+
+    var authorizationToken = '';
+    
+    $.ajax({
+      type: 'POST',
+      url: tokenEndpoint,
+      headers: {
+        'Ocp-Apim-Subscription-Key': subscriptionKey
+      },
+      success: function (data) {
+        authorizationToken = data;
+      },
+      error: function (err) {
+        console.error('Error getting authorization token:', err);
+      }
+    });
+
+    var recognizer;
+
+    function startRecognition() {
+      var headers = {
+        'Authorization': 'Bearer ' + authorizationToken,
+        'Content-Type': 'audio/wav; codec=audio/pcm; samplerate=16000'
+      };
+
+      recognizer = new webkitSpeechRecognition();
+      recognizer.continuous = true;
+      recognizer.interimResults = true;
+      recognizer.lang = 'en-US';
+      recognizer.start();
+
+      recognizer.onresult = function (event) {
+        var result = event.results[event.resultIndex];
+        if (result.isFinal) {
+          $('#result').text(result[0].transcript);
+        }
+      };
+
+      recognizer.onerror = function (event) {
+        console.error('Recognition error:', event.error);
+      };
+
+      $('#startButton').addClass('pulse-animation');
+    }
+
+    function stopRecognition() {
+      if (recognizer) {
+        recognizer.stop();
+      }
+
+      $('#startButton').removeClass('pulse-animation');
+    }
+
+    $('#startButton').on('click', startRecognition);
+    $('#stopButton').on('click', stopRecognition);
+  </script>
+  
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
+  <title>Speech to Text</title>
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
+  
+  <style>
+    body {
+      font-family: "Open Sans", sans-serif;
+background-color:#FEF8F5; 
+  
+  }
+
+  h1 {
+      color: #4E4039;
+      text-align: center;
+  }
+
+  #container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+.button-container {
+text-align: center;
+margin-top: 20px;
+}
+
+button {
+padding: 10px 20px;
+font-size: 16px;
+background-color: #eb5d1e;
+color: white;
+border: none;
+cursor: pointer;
+margin-right: 10px;
+border-radius: 4px;
+transition: background-color 0.3s ease;
+}
+
+button:hover {
+background-color: #f77e4a;
+}
+
+
+
+.pulse-animation {
+animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+0% {
+  transform: scale(1);
+  opacity: 1;
+}
+50% {
+  transform: scale(1.1);
+  opacity: 0.7;
+}
+100% {
+  transform: scale(1);
+  opacity: 1;
+}
+}
+
+
+  @keyframes floatAnimation {
+      0% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-10px); }
+      100% { transform: translateX(-50%) translateY(0); }
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1></h1>
+    <div class="button-container">
+      <button id="startButton">Start</button>
+      <button id="stopButton">Stop</button>
+    </div>
+    <p id="result"></p>
+    <div id="video-container"></div>
+  </div>
+
+  <script>
+    var subscriptionKey = '53a3231e62ad4d8388135e3308e4b632';
+    var tokenEndpoint = 'https://eastus.api.cognitive.microsoft.com/sts/v1.0/issuetoken';
+    var speechRecognitionEndpoint = 'https://eastus.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1';
+
+    var authorizationToken = '';
+    
+    $.ajax({
+      type: 'POST',
+      url: tokenEndpoint,
+      headers: {
+        'Ocp-Apim-Subscription-Key': subscriptionKey
+      },
+      success: function (data) {
+        authorizationToken = data;
+      },
+      error: function (err) {
+        console.error('Error getting authorization token:', err);
+      }
+    });
+
+    var recognizer;
+
+    function startRecognition() {
+      var headers = {
+        'Authorization': 'Bearer ' + authorizationToken,
+        'Content-Type': 'audio/wav; codec=audio/pcm; samplerate=16000'
+      };
+
+      recognizer = new webkitSpeechRecognition();
+      recognizer.continuous = true;
+      recognizer.interimResults = true;
+      recognizer.lang = 'en-US';
+      recognizer.start();
+
+      recognizer.onresult = function (event) {
+        var result = event.results[event.resultIndex];
+        if (result.isFinal) {
+          $('#result').text(result[0].transcript);
+          generateVideo(result[0].transcript);
+        }
+      };
+
+      recognizer.onerror = function (event) {
+        console.error('Recognition error:', event.error);
+      };
+
+      $('#startButton').addClass('pulse-animation');
+    }
+
+    function stopRecognition() {
+      if (recognizer) {
+        recognizer.stop();
+      }
+
+      $('#startButton').removeClass('pulse-animation');
+    }
+
+    function generateVideo(inputText) {
+      var heygenApiKey = 'your_heygen_api_key';
+      var heygenApiUrl = 'https://api.heygen.com/v1/video.generate';
+
+      var headers = {
+        'X-Api-Key': heygenApiKey,
+        'Content-Type': 'application/json'
+      };
+
+      var data = {
+        "background": "#ffffff",
+        "clips": [
+          {
+            "avatar_id": "Daisy-inskirt-20220818",
+            "avatar_style": "normal",
+            "input_text": inputText,
+            "offset": {"x": 0, "y": 0},
+            "scale": 1,
+            "voice_id": "1bd001e7e50f421d891986aad5158bc8"
+          }
+        ],
+        "ratio": "16:9",
+        "test": true,
+        "version": "v1alpha"
+      };
+
+      $.ajax({
+        type: 'POST',
+        url: heygenApiUrl,
+        headers: headers,
+        data: JSON.stringify(data),
+        success: function (response) {
+          var videoUrl = response.video_url;
+          var videoElement = '<video src="' + videoUrl + '" controls autoplay></video>';
+          $('#video-container').html(videoElement);
+        },
+        error: function (err) {
+          console.error('Error generating video:', err);
+        }
+      });
+    }
+
+    $('#startButton').on('click', startRecognition);
+    $('#stopButton').on('click', stopRecognition);
+  </script>
+</body>
+</html>

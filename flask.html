@@ -1,0 +1,106 @@
+from flask import Flask, render_template, request, redirect, url_for
+from flask_cors import CORS
+import schedule
+import time
+import smtplib
+from email.mime.text import MIMEText
+from firebase_admin import auth
+
+
+
+app = Flask(__name__, template_folder='templates', static_folder='static')
+CORS(app)
+
+
+# Store reminders in a dictionary with user UID as the key
+reminders = {}
+
+def send_email(reminder_text, user):
+    # Use the authenticated user's email as the sender email
+    sender_email = user.email
+
+    # Add your email configuration here
+    smtp_server = 'your_smtp_server'
+    smtp_port = 587
+    smtp_username = 'your_email@gmail.com'
+    smtp_password = 'your_email_password'
+
+    # Create message
+    subject = 'Health Reminder'
+    body = f'Reminder: {reminder_text}'
+    message = MIMEText(body)
+    message['Subject'] = subject
+    message['From'] = sender_email
+    message['To'] = sender_email
+
+    # Connect to SMTP server and send email
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, [sender_email], message.as_string())
+
+def job():
+    for user_uid, user_reminders in reminders.items():
+        user = auth.get_user(user_uid)
+        for reminder, _ in user_reminders:
+            send_email(reminder, user)
+
+# Schedule job to run every minute
+schedule.every(1).minutes.do(job)
+
+# Start scheduled job in a separate thread
+def schedule_thread():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+if __name__ == "__main__":
+    import threading
+
+    # Start the schedule thread
+    schedule_thread = threading.Thread(target=schedule_thread)
+    schedule_thread.start()
+
+    @app.route('/')
+    def index():
+        return render_template('index.html', reminders=reminders.get(auth.current_user.uid, []))
+
+    @app.route('/add_reminder', methods=['POST'])
+    def add_reminder():
+        reminder_text = request.form.get('reminder')
+
+        if reminder_text:
+            user_uid = auth.current_user.uid
+            if user_uid not in reminders:
+                reminders[user_uid] = []
+            reminders[user_uid].append((reminder_text, auth.get_user(user_uid).email))
+            return redirect(url_for('index'))
+
+    @app.route('/login')
+    def login():
+        return render_template('login.html')
+
+    @app.route('/assistant')
+    def page2():
+        return render_template('assistant.html')
+
+    @app.route('/contact')
+    def page3():
+        return render_template('contact.html')
+
+    @app.route('/prediction')
+    def page4():
+        return render_template('prediction.html')
+
+    @app.route('/recommend')
+    def page5():
+        return render_template('recommend.html')
+    
+    @app.route('/reminder')
+    def page5():
+        return render_template('reminder.html')
+    
+    @app.route('/appointment')
+    def page5():
+        return render_template('appointment.html')
+    app.run(debug=True)

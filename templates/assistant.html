@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
+  <title>Voice Chat App</title>
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+  <style>
+    body {
+      font-family: "Open Sans", sans-serif;
+      background-color: #FEF8F5;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      color: #4E4039;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #eb5d1e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #f77e4a;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #video-container {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .video-item {
+      margin: 10px;
+      max-width: 400px;
+    }
+
+    .pulse-animation {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    #text-to-speech {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Virtual Assistant</h1>
+    <div class="button-container">
+      <button id="startButton">Start</button>
+      <button id="stopButton">Stop</button>
+    </div>
+    <p id="result"></p>
+    <div id="video-container"></div>
+  </div>
+
+  <div id="text-to-speech">
+    <textarea id="text" rows="4" cols="50" placeholder="Enter your text"></textarea>
+    <br>
+    <div class="button-container">
+        <button onclick="convertTextToSpeech()">Convert to Speech</button>
+    </div>
+    <br>
+    <audio id="audio"></audio>
+  </div>
+
+  <script>
+    var subscriptionKey = '53a3231e62ad4d8388135e3308e4b632';
+    var tokenEndpoint = 'https://eastus.api.cognitive.microsoft.com/sts/v1.0/issuetoken';
+    var speechRecognitionEndpoint = 'https://eastus.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1';
+
+    var authorizationToken = '';
+    
+    $.ajax({
+      type: 'POST',
+      url: tokenEndpoint,
+      headers: {
+        'Ocp-Apim-Subscription-Key': subscriptionKey
+      },
+      success: function (data) {
+        authorizationToken = data;
+      },
+      error: function (err) {
+        console.error('Error getting authorization token:', err);
+      }
+    });
+
+    var recognizer;
+
+    function startRecognition() {
+      var headers = {
+        'Authorization': 'Bearer ' + authorizationToken,
+        'Content-Type': 'audio/wav; codec=audio/pcm; samplerate=16000'
+      };
+
+      recognizer = new webkitSpeechRecognition();
+      recognizer.continuous = true;
+      recognizer.interimResults = true;
+      recognizer.lang = 'hi-IN';
+      recognizer.start();
+
+      recognizer.onresult = function (event) {
+        var result = event.results[event.resultIndex];
+        if (result.isFinal) {
+          var transcribedText = result[0].transcript;
+          $('#result').text(transcribedText);
+          setTimeout(function() {
+            generateVideo(transcribedText);
+          }, 1000); // Delay of 1 second (1000 milliseconds)
+        }
+      };
+
+      recognizer.onerror = function (event) {
+        console.error('Recognition error:', event.error);
+      };
+
+      $('#startButton').addClass('pulse-animation');
+    }
+
+    function stopRecognition() {
+      if (recognizer) {
+        recognizer.stop();
+      }
+
+      $('#startButton').removeClass('pulse-animation');
+    }
+    
+
+    $('#startButton').on('click', startRecognition);
+    $('#stopButton').on('click', stopRecognition);
+
+    function convertTextToSpeech() {
+      var text = document.getElementById('text').value;
+      var subscriptionKey = '53a3231e62ad4d8388135e3308e4b632'; 
+
+      var apiUrl = 'https://eastus.tts.speech.microsoft.com/cognitiveservices/v1';
+      var request = new XMLHttpRequest();
+      request.open('POST', apiUrl, true);
+      request.setRequestHeader('Ocp-Apim-Subscription-Key', subscriptionKey);
+      request.setRequestHeader('Content-Type', 'application/ssml+xml');
+      request.setRequestHeader('X-Microsoft-OutputFormat', 'riff-24khz-16bit-mono-pcm');
+      request.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
+      request.responseType = 'arraybuffer';
+
+      request.onload = function() {
+        if (request.status === 200) {
+          var audioData = request.response;
+          var audioContext = new AudioContext();
+          audioContext.decodeAudioData(audioData, function(buffer) {
+            var audioSource = audioContext.createBufferSource();
+            audioSource.buffer = buffer;
+            audioSource.connect(audioContext.destination);
+            audioSource.start(0);
+          }, function(e) {
+            console.error('Error decoding audio data:', e);
+          });
+        } else {
+          console.error('Error:', request.statusText);
+        }
+      };
+
+      var body = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="hi-IN">' +
+        '<voice name="hi-IN-SwaraNeural">' + text + '</voice></speak>';
+
+      request.send(body);
+    }
+  </script>
+</body>
+</html>

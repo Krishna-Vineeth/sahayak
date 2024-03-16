@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<head>
+    <title>Health Assistant</title>
+    <style>
+      body {
+          background-color: #333;
+          color: #fff;
+          font-family: Arial, sans-serif;
+      }
+
+      .container {
+          display: flex;
+          flex-direction: row;
+      }
+
+      .sidebar {
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: 180px;
+          height: 100vh;
+          background-color: #555;
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+      }
+
+      .sidebar ul {
+          padding: 0;
+          margin: 0;
+          width: 100%;
+          height: 100%;
+          list-style: none;
+      }
+
+      .sidebar li {
+          background-color: rgba(255, 255, 255, 0.1);
+          width: 100%;   
+          padding: .5rem 0;         
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 40px;
+          cursor: pointer;
+      }
+
+      .sidebar li:hover {
+          background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .sidebar li:first-child {
+          border: 1px solid transparent;
+          border-top-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .sidebar li {
+          border: 1px solid transparent;
+          border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+      }
+
+      .sidebar li .label {
+          flex: 2;
+          font-size: 1rem;
+      }
+
+
+      .sidebar li .time {
+          width: 100%;
+          text-align: right;
+          padding-right: 1rem;
+          flex: 1;
+          opacity: .7;
+          font-size: .7rem;
+      }
+      
+      .sidebar li .activity {
+          background-color: transparent !important;
+      }
+
+      .content {
+          width: 60%;
+          padding: 20px;
+          background-color: #fff;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+          margin: 0 auto;
+      }
+
+      .search-bar {
+          margin-bottom: 20px;
+      }
+      
+      .symptom-container {
+          max-height: 400px;
+          overflow: auto;
+      }
+
+      .symptom-tag {
+          display: inline-block;
+          padding: 5px 10px;
+          margin: 5px;
+          background-color: #ccc;
+          border-radius: 5px;
+          cursor: pointer;
+      }
+
+      .symptom-tag.selected {
+          background-color: #ff0000;
+          color: #fff;
+      }
+
+      .submit-button {
+          display: block;
+          width: 100%;
+          padding: 10px;
+          margin-top: 20px;
+          background-color: #ff0000;
+          color: #fff;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+      }
+  </style>
+
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <ul>
+                <li>
+                    <div class="activity">Activity</div>
+                </li>
+            </ul>
+        </div>
+        <div class="content">
+            <div class="search-bar">
+                <input type="text" placeholder="Search..." oninput="debounceFilterSymptoms(event)">
+            </div>
+            <div class="symptom-container">
+                <!-- <div class="symptom-tag">Headache</div>
+                <div class="symptom-tag">Stomach pain</div> -->
+                <!-- Add more symptom tags here -->
+            </div>
+            <!-- <button class="submit-button" onclick="submitForm()">Submit</button> -->
+        </div>
+    </div>
+</body>
+<script type="module">
+    import { db, dbRef, onValue } from "./static/js/fire.js";
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    const readActivityRef = dbRef(db, `users/${user.email.split("@")[0]}/activity`);
+
+    onValue(readActivityRef, (snapshot) => {
+        const data = snapshot.val();
+        console.log("Data read:", data);
+        const keys = Object.keys(data).reverse();
+
+        const sidebarUl = document.querySelector('.sidebar ul');
+
+        keys.map((key) => {
+            const activity = data[key];
+            const li = document.createElement('li');
+            const label = document.createElement('div');
+            const time = document.createElement('div');
+
+            label.classList.add('label');
+            label.textContent = activity.symptom.split(",")[0].replace(/_/g, ' ').replace(/\b\w/g, function(c) {
+                return c.toUpperCase();
+            });
+            li.onclick = () => {
+                window.location.href = `/recommend.html?symptoms=${encodeURIComponent(activity.symptom.split(",").slice(1))}`;
+            }
+
+            time.classList.add('time');
+            const activityDate = new Date(activity.time);
+            const formattedDate = activityDate.toLocaleDateString();
+            time.textContent = formattedDate;
+
+            li.appendChild(label);
+            li.appendChild(time);
+            sidebarUl.appendChild(li);
+        })
+    }, (error) => {
+        console.error("Error reading data:", error);
+    });
+
+    axios.get('https://niyabackend.pythonanywhere.com/get_all_syms')
+        .then(function(response) {
+            var symptoms = response.data;
+            var symptomContainer = document.querySelector('.symptom-container');
+
+
+            symptoms.forEach(function(symptom) {
+                var symptomDiv = document.createElement('div');
+                symptomDiv.classList.add('symptom-tag');
+                symptomDiv.setAttribute("raw_symptom", symptom);
+                symptomDiv.textContent = symptom.replace(/_/g, ' ').replace(/\b\w/g, function(c) {
+                    return c.toUpperCase();
+                });
+                symptomDiv.addEventListener('click', function() {
+                    symptomDiv.classList.toggle('selected');
+                    window.location.href = '/related.html?symptom=' + encodeURIComponent(symptom);
+                });
+                symptomContainer.appendChild(symptomDiv);
+                symptomDiv.classList.add('symptom-tag');
+                symptomDiv.textContent = symptom.replace(/_/g, ' ').replace(/\b\w/g, function(c) {
+                    return c.toUpperCase();
+                });
+                symptomContainer.appendChild(symptomDiv);
+            });
+        })
+        .catch(function(error) {
+            console.error('Error fetching symptoms:', error);
+        });
+
+    window.debounceFilterSymptoms = (event) => {
+        clearTimeout(debounceFilterSymptoms.timeout);
+        debounceFilterSymptoms.timeout = setTimeout(function() {
+            var searchValue = event.target.value.toLowerCase();
+            var symptomTags = document.querySelectorAll('.symptom-tag');
+            symptomTags.forEach(function(symptomTag) {
+                var symptomName = symptomTag.textContent.toLowerCase();
+                if (symptomName.includes(searchValue)) {
+                    symptomTag.style.display = 'inline-block';
+                } else {
+                    symptomTag.style.display = 'none';
+                }
+            });
+        }, 300);
+    }
+</script>
+</html>
